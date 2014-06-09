@@ -62,6 +62,8 @@ var Liner = (function () {
     
     function onFingerUp (e) {
         fingerDown = false;
+        pointA.pressed = false;
+        pointB.pressed = false;
     }
     
     function onFingerMove (e) {
@@ -109,6 +111,7 @@ var Liner = (function () {
         // Get context
         ctx = canvas.getContext('2d');
         vCtx = vCanvas.getContext('2d');
+        vCtx.lineWidth = POINT_RADIUS / 4;
     }
     
     function start () {
@@ -125,7 +128,14 @@ var Liner = (function () {
         
         
         // Set interval tick()
-        tickInterval = setInterval(tick, RENDER_TIMEOUT);
+        //tickInterval = setInterval(tick, RENDER_TIMEOUT);
+        ticker();
+        
+    }
+    
+    function ticker () {
+        tick();
+        requestAnimationFrame(ticker);
     }
     
     function tick () {
@@ -168,7 +178,6 @@ var Liner = (function () {
            c.beginPath();
            c.moveTo(pressed.x, pressed.y);
            c.lineTo(finger.x,finger.y);
-           c.lineWidth = POINT_RADIUS / 4;
            c.stroke(); 
         }
         
