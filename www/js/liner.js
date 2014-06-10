@@ -29,7 +29,8 @@ var Liner = (function () {
         screenWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0),
         screenHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0),
         pointA = new Point(),
-        pointB =  new Point(),
+        pointB = new Point(),
+        pointC = new Point(),
         fingerDown = false,
         finger = new Point(),
         tickInterval = 0;
@@ -57,13 +58,16 @@ var Liner = (function () {
             pointA.pressed = true;
         } else if (fingerInPoint(pointB)) {
             pointB.pressed = true;
-        } 
+        } else if (fingerInPoint(pointC)) {
+            pointC.pressed = true;
+        }
     }
     
     function onFingerUp (e) {
         fingerDown = false;
         pointA.pressed = false;
         pointB.pressed = false;
+        pointC.pressed = false;
     }
     
     function onFingerMove (e) {
@@ -80,9 +84,11 @@ var Liner = (function () {
                 pointA.pressed = true;
             } else if (fingerInPoint(pointB)) {
                 pointB.pressed = true;
+            } else if (fingerInPoint(pointC)) {
+                pointC.pressed = true;
             }
         
-            if (pointA.pressed && pointB.pressed) {
+            if (pointA.pressed && pointB.pressed && pointC.pressed) {
                 updatePoints();
             }
         }
