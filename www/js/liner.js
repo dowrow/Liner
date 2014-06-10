@@ -33,7 +33,10 @@ var Liner = (function () {
         pointC = new Point(),
         fingerDown = false,
         finger = new Point(),
-        tickInterval = 0;
+        tickInterval = 0,
+        halo = [new Point(), new Point()];
+        haloStep = 0
+        activeHalo = false;
         
         
     // Macros
@@ -82,13 +85,19 @@ var Liner = (function () {
         if (fingerDown) {
             if (fingerInPoint(pointA)) {
                 pointA.pressed = true;
-            } else if (fingerInPoint(pointB)) {
+            } else if (fingerInPoint(pointB) && pointA.pressed) {
                 pointB.pressed = true;
-            } else if (fingerInPoint(pointC)) {
+            } else if (fingerInPoint(pointC) && pointB.pressed) {
                 pointC.pressed = true;
             }
         
             if (pointA.pressed && pointB.pressed && pointC.pressed) {
+                halo[0].x = pointA.x;
+                halo[0].y = pointA.y;
+                halo[1].x = pointB.x;
+                halo[1].y = pointB.y;
+                haloStep = 0;
+                activeHalo = true;
                 updatePoints();
             }
         }
@@ -159,43 +168,99 @@ var Liner = (function () {
     }
     
     function updatePoints () {
-        // TODO: Swap pressed point.
-        pointB = pointA;
+        
+        pointA = pointB;
+        pointB = pointC;
+        
         do {
-            
-            pointA = getRandomPoint(screenWidth, screenHeight);
-        } while (pointA.distanceTo(pointB) < MIN_DISTANCE);
+            pointC = getRandomPoint(screenWidth, screenHeight);
+        } while ((pointC.distanceTo(pointB) < MIN_DISTANCE) || (pointC.distanceTo(pointA) < MIN_DISTANCE));
     }
         
     function update () {
         if (pointA.x === -1 || pointA.y === -1 || pointB.x === -1 || pointB.y === -1)
             updatePoints();
+        
+        if (activeHalo) {
+            haloStep += 2;
+            if (haloStep > 100) {
+                activeHalo = false;
+            }
+        }
     }
         
     function renderPoints (c) {
+        
         pointA.render(c);
-        pointB.render(c);
+        
+        if (pointA.pressed)
+            pointB.render(c);
+        
+        if (pointB.pressed)
+            pointC.render(c);
     }
     
-    function renderRay (c) {
-        var pressed = false;
-        if (pointA.pressed) {
-            pressed = pointA;
-        } else if (pointB.pressed) {
-            pressed = pointB;
+    function renderRays (c) {
+        
+        if (!fingerDown)
+            return;
+        
+        // One pressed
+        if (pointA.pressed && !pointB.pressed) {
+            
+            // Ray from a to finger
+            c.beginPath();
+            c.moveTo(pointA.x, pointA.y);
+            c.lineTo(finger.x, finger.y);
+            c.stroke(); 
+            
+        // Two pressed
+        } else if (pointA.pressed && pointB.pressed) {
+            
+            // One ray from a to b
+            c.beginPath();
+            c.moveTo(pointA.x, pointA.y);
+            c.lineTo(pointB.x, pointB.y);
+            c.stroke(); 
+            
+            // Ray from b to pointer
+            c.beginPath();
+            c.moveTo(pointB.x, pointB.y);
+            c.lineTo(finger.x, finger.y);
+            c.stroke(); 
+            
+      
+        } else if (pointC.pressed) {
+    
         }
-        if (fingerDown && pressed) {
-           c.beginPath();
-           c.moveTo(pressed.x, pressed.y);
-           c.lineTo(finger.x,finger.y);
-           c.stroke(); 
-        }
+        
+        
+       
     }
+    
+    function renderHalo (c) {
+        
+        if (!activeHalo) {
+            return;
+        }
+        
+        var oldStyle = c.strokeStyle;
+        c.strokeStyle = 'rgba(255,0,0,' + (1 - (haloStep / 100)) +')';
+        c.beginPath();
+        c.moveTo(halo[0].x, halo[0].y);
+        c.lineTo(halo[1].x, halo[1].y);
+        c.stroke(); 
+        c.strokeStyle = oldStyle;
+        
+    }
+    
     function render () {
         // Draw every object in virtual canvas
         vCtx.clearRect(0, 0, screenWidth, screenHeight);
+        renderHalo(vCtx);
         renderPoints(vCtx);
-        renderRay(vCtx);
+        renderRays(vCtx);
+        
         
         // Copy virtual to real canvas
         ctx.clearRect(0, 0, screenWidth, screenHeight);
