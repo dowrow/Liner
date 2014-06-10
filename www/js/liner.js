@@ -153,6 +153,7 @@ var Liner = (function () {
     }
     
     function updatePoints () {
+        // TODO: Swap pressed point.
         pointB = pointA;
         do {
             
@@ -171,16 +172,18 @@ var Liner = (function () {
     }
     
     function renderRay (c) {
-        var pressed = pointA.pressed? pointA : pointB;
-        
-        if (fingerDown) {
-           
+        var pressed = false;
+        if (pointA.pressed) {
+            pressed = pointA;
+        } else if (pointB.pressed) {
+            pressed = pointB;
+        }
+        if (fingerDown && pressed) {
            c.beginPath();
            c.moveTo(pressed.x, pressed.y);
            c.lineTo(finger.x,finger.y);
            c.stroke(); 
         }
-        
     }
     function render () {
         // Draw every object in virtual canvas
