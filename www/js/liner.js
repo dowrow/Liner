@@ -73,7 +73,22 @@ var Liner = (function () {
         pointC.pressed = false;
     }
     
+    // Segment collision detection: http://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
+    function ccw (a, b, c) {
+        return ((c.y - a.y) * (b.x - a.x) > (b.y - a.y) * (c.x - a.x));
+    }
+    
+    function intersect (segment1, segment2) {
+        var a = segment1[0],
+            b = segment1[1],
+            c = segment2[0],
+            d = segment2[1];
+        return (ccw(a, c, d) != ccw(b, c, d) && ccw(a, b, c) != ccw(a, b, d));
+    }
+    
     function onFingerMove (e) {
+       
+        // Update finger position
         if (e.touches) {
             finger.x = e.touches[0].pageX;
             finger.y = e.touches[0].pageY;
@@ -82,6 +97,7 @@ var Liner = (function () {
             finger.y = e.pageY;
         }
         
+        // Press points
         if (fingerDown) {
             if (fingerInPoint(pointA)) {
                 pointA.pressed = true;
@@ -90,7 +106,8 @@ var Liner = (function () {
             } else if (fingerInPoint(pointC) && pointB.pressed) {
                 pointC.pressed = true;
             }
-        
+            
+            // Make halo active when 3 points are pressed
             if (pointA.pressed && pointB.pressed && pointC.pressed) {
                 halo[0].x = pointA.x;
                 halo[0].y = pointA.y;
@@ -99,6 +116,17 @@ var Liner = (function () {
                 haloStep = 0;
                 activeHalo = true;
                 updatePoints();
+            }
+        }
+        
+        // Detect collision with halo
+        if (activeHalo) {
+            var ray = [pointB, finger];
+            if (intersect(halo, ray)) {
+                console.log('Collision');
+                // Stop rendering halo
+                activeHalo = false;
+               
             }
         }
         
