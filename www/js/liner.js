@@ -1,5 +1,21 @@
+var Liner = Liner || {};
 
-var Liner = (function () {
+// Requires howler.js
+Liner.audio = (function (Howler) {
+    var click = new Howl({urls: ['samples/beep1.wav']}),
+        clack = new Howl({urls: ['samples/beep2.wav']}),
+        fail = new Howl({urls: ['samples/lasergun1.wav']});
+    
+    return {
+        playClick: function () { click.play(); },
+        playClack: function () { clack.play(); },
+        playFail: function () { fail.play(); }
+    };
+    
+} (Howler));
+
+Liner.engine = (function () {
+    
     
     // Point object
     function Point () {
@@ -33,7 +49,6 @@ var Liner = (function () {
         pointC = new Point(),
         fingerDown = false,
         finger = new Point(),
-        tickInterval = 0,
         halo = [new Point(), new Point()];
         haloStep = 0
         activeHalo = false;
@@ -99,12 +114,15 @@ var Liner = (function () {
         
         // Press points
         if (fingerDown) {
-            if (fingerInPoint(pointA)) {
+            if (fingerInPoint(pointA) && !pointA.pressed) {
                 pointA.pressed = true;
-            } else if (fingerInPoint(pointB) && pointA.pressed) {
+                Liner.audio.playClick();
+            } else if (fingerInPoint(pointB) && pointA.pressed && !pointB.pressed) {
                 pointB.pressed = true;
-            } else if (fingerInPoint(pointC) && pointB.pressed) {
+                Liner.audio.playClack();
+            } else if (fingerInPoint(pointC) && pointB.pressed && !pointC.pressed) {
                 pointC.pressed = true;
+                Liner.audio.playClack();
             }
             
             // Make halo active when 3 points are pressed
@@ -123,13 +141,22 @@ var Liner = (function () {
         if (activeHalo) {
             var ray = [pointB, finger];
             if (intersect(halo, ray)) {
-                console.log('Collision');
-                // Stop rendering halo
-                activeHalo = false;
-               
+                onCollision();
             }
         }
         
+    }
+    
+    function onCollision () {
+        Liner.audio.playFail();
+                
+        // Stop rendering halo
+        activeHalo = false;
+        
+        // Un press everything
+        pointA.pressed = false;
+        pointB.pressed = false;
+        pointC.pressed = false;
     }
         
     function bindCanvas (id) {
@@ -157,8 +184,7 @@ var Liner = (function () {
         vCtx.lineWidth = POINT_RADIUS / 4;
     }
     
-    function start () {
-        // Bind events
+    function bindEvents () {
         // Mouse        
         window.addEventListener('mousedown', onFingerDown);
         window.addEventListener('mouseup', onFingerUp);
@@ -168,17 +194,23 @@ var Liner = (function () {
         window.addEventListener('touchstart', onFingerDown);
         window.addEventListener('touchend', onFingerUp);
         window.addEventListener('touchmove', onFingerMove);
+    }
+    
+    function start () {
+        
+        // Bind events
+        bindEvents();
         
         
-        // Set interval tick()
-        //tickInterval = setInterval(tick, RENDER_TIMEOUT);
-        ticker();
+        
+        // Start running game clock 
+        clock();
         
     }
     
-    function ticker () {
+    function clock () {
         tick();
-        requestAnimationFrame(ticker);
+        requestAnimationFrame(clock);
     }
     
     function tick () {
