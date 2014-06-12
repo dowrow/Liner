@@ -379,13 +379,13 @@ Liner.engine = (function () {
         
         var digits = score.toString().length;
         
-        c.font = (screenWidth * 0.05) / digits +  'px Arial';
+        c.font = (Math.min(screenHeight, screenWidth) * 0.05) / digits +  'px Arial';
         
         
         if (score > 0 && activeHalo) {
             var oldStyle = c.fillStyle;
             c.fillStyle = 'rgba(255, 255, 255, 1)';
-            c.fillText(score, pointB.x - screenWidth*0.015, pointB.y + screenWidth*0.015);
+            c.fillText(score, pointB.x - Math.min(screenHeight, screenWidth)*0.015, pointB.y + Math.min(screenHeight, screenWidth)*0.015);
             c.fillStyle = oldStyle;
     
         }
