@@ -389,6 +389,7 @@ Liner.engine = (function () {
             c.fillStyle = oldStyle;
     
         }
+        
     }
     
     function render () {
