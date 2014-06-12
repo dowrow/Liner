@@ -49,15 +49,23 @@ Liner.engine = (function () {
         pointC = new Point(),
         fingerDown = false,
         finger = new Point(),
-        halo = [new Point(), new Point()];
-        haloStep = 0
-        activeHalo = false;
+        halo = [new Point(), new Point()],
+        haloStep = 0,
+        activeHalo = false,
+        score = 0,
+        last = 0,
+        now = 0,
+        delta = 1,
+        failed = false,
+        failStep = 0,
+        collision = new Point();
         
         
     // Macros
     var RENDER_TIMEOUT = 0,
         POINT_RADIUS = Math.min(screenWidth, screenHeight) * 0.1,
-        MIN_DISTANCE = POINT_RADIUS * 6;
+        MIN_DISTANCE = POINT_RADIUS * 6,
+        HALO_SPEED = 0.2;
     
     // Check if finger touches given point
     function fingerInPoint (point) {
@@ -123,6 +131,7 @@ Liner.engine = (function () {
             } else if (fingerInPoint(pointC) && pointB.pressed && !pointC.pressed) {
                 pointC.pressed = true;
                 Liner.audio.playClack();
+                score++; // WIN A POINT
             }
             
             // Make halo active when 3 points are pressed
@@ -157,6 +166,14 @@ Liner.engine = (function () {
         pointA.pressed = false;
         pointB.pressed = false;
         pointC.pressed = false;
+        
+        // Render fail
+        collision.x = finger.x;
+        collision.y = finger.y;
+        failed = true;
+        
+        // You loose everything
+        score = 0;
     }
         
     function bindCanvas (id) {
@@ -214,8 +231,11 @@ Liner.engine = (function () {
     }
     
     function tick () {
+        now = new Date();
+        delta = now - last;
         update();
         render();
+        last = now;
     }
     
     function getRandomPoint (maxWidth, maxHeight) {
@@ -236,16 +256,37 @@ Liner.engine = (function () {
             pointC = getRandomPoint(screenWidth, screenHeight);
         } while ((pointC.distanceTo(pointB) < MIN_DISTANCE) || (pointC.distanceTo(pointA) < MIN_DISTANCE));
     }
+    
+    function updateFail () {
         
+        if (!failed)
+            return;
+        
+        if (failStep < 100) {
+            failStep+=10;
+            return;
+        }
+        
+        failStep = 0;
+        failed = false;
+        
+    }
+    
     function update () {
         if (pointA.x === -1 || pointA.y === -1 || pointB.x === -1 || pointB.y === -1)
             updatePoints();
         
         if (activeHalo) {
-            haloStep += 2;
+            for (var i = 0; i < delta; i++) {
+                haloStep += HALO_SPEED;
+            }
             if (haloStep > 100) {
                 activeHalo = false;
             }
+        }
+        
+        if (failed) {
+            updateFail ();
         }
     }
         
@@ -314,13 +355,50 @@ Liner.engine = (function () {
         
     }
     
+    function renderFail (c) {
+        if (failed) {
+            // Red bg
+            var oldF = c.fillStyle;
+            c.fillStyle = 'red';
+            c.fillRect(0, 0, screenWidth, screenHeight);
+            
+            // White halo
+            var oldStyle = c.strokeStyle;
+            c.strokeStyle = 'white';
+            c.beginPath();
+            c.moveTo(halo[0].x, halo[0].y);
+            c.lineTo(halo[1].x, halo[1].y);
+            c.stroke(); 
+            c.strokeStyle = oldStyle;
+            
+            c.fillStyle = oldF;
+        }
+    }
+    
+    function renderScore (c) {
+        
+        var digits = score.toString().length;
+        
+        c.font = (screenWidth * 0.05) / digits +  'px Arial';
+        
+        
+        if (score > 0 && activeHalo) {
+            var oldStyle = c.fillStyle;
+            c.fillStyle = 'rgba(255, 255, 255, 1)';
+            c.fillText(score, pointB.x - screenWidth*0.015, pointB.y + screenWidth*0.015);
+            c.fillStyle = oldStyle;
+    
+        }
+    }
+    
     function render () {
         // Draw every object in virtual canvas
         vCtx.clearRect(0, 0, screenWidth, screenHeight);
         renderHalo(vCtx);
         renderPoints(vCtx);
         renderRays(vCtx);
-        
+        renderScore(vCtx);
+        renderFail(vCtx);
         
         // Copy virtual to real canvas
         ctx.clearRect(0, 0, screenWidth, screenHeight);
