@@ -200,10 +200,11 @@ define(['audio', 'point'], function (audio) {
     }
     
     function getRandomPoint (maxWidth, maxHeight) {
-        var p = new Point(POINT_RADIUS);
+        var p = new Point(POINT_RADIUS),
+            scoreMargin = Math.min(screenHeight, screenWidth) * 0.1;
         
         p.x = Math.floor(POINT_RADIUS + Math.random() * (maxWidth - 2 * POINT_RADIUS));
-        p.y = Math.floor(POINT_RADIUS + Math.random() * (maxHeight - 2 * POINT_RADIUS));
+        p.y = Math.floor(scoreMargin + POINT_RADIUS + Math.random() * (maxHeight - 2 * POINT_RADIUS - scoreMargin   ));
         
         return p;
     }
@@ -331,20 +332,11 @@ define(['audio', 'point'], function (audio) {
         }
     }
     
+    // Draw score in top left corner (10% top)
     function renderScore (c) {
-        
-        var digits = score.toString().length;
-        
-        c.font = (Math.min(screenHeight, screenWidth) * 0.05) / digits +  'px Arial';
-        
-        if (score > 0 && activeHalo) {
-            var oldStyle = c.fillStyle;
-            c.fillStyle = 'rgba(255, 255, 255, 1)';
-            c.fillText(score, pointB.x - Math.min(screenHeight, screenWidth)*0.015, pointB.y + Math.min(screenHeight, screenWidth)*0.015);
-            c.fillStyle = oldStyle;
-    
-        }
-        
+        var fontSize = Math.min(screenHeight, screenWidth) * 0.05;
+        c.font = fontSize +  'px Helvetica, Arial, sans-serif';
+        c.fillText('Score: ' + score, fontSize * 0.5, fontSize);
     }
     
     function render () {
