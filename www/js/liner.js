@@ -2,16 +2,24 @@
 // Simple yet addictive geometric game
 // Diego Castaño (Dowrow) 06-2014
 
-// Requires audio module
-define(['audio'], function (audio) {
+// Requires audio and point modules
+define(['audio', 'point'], function (audio) {
     
+    // DOM referenecs
     var canvas = {}, ctx = {},
         vCanvas = {}, vCtx = {},
         screenWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0),
         screenHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0),
-        pointA = new Point(),
-        pointB = new Point(),
-        pointC = new Point(),
+        
+    // Macros
+        POINT_RADIUS = Math.min(screenWidth, screenHeight) * 0.1,
+        MIN_DISTANCE = POINT_RADIUS * 6,
+        HALO_SPEED = 0.2;
+    
+    // Private variables
+        pointA = new Point(POINT_RADIUS),
+        pointB = new Point(POINT_RADIUS),
+        pointC = new Point(POINT_RADIUS),
         fingerDown = false,
         finger = new Point(),
         halo = [new Point(), new Point()],
@@ -25,38 +33,10 @@ define(['audio'], function (audio) {
         failStep = 0,
         collision = new Point();
     
-    // Point object
-    function Point () {
-        this.x = -1;
-        this.y = -1;
-        this.pressed = false;
-    }
-
-    Point.prototype.distanceTo = function (b) {
-        return Math.sqrt((b.x - this.x) * (b.x - this.x) + (b.y - this.y) * (b.y - this.y));
-    };
-
-    Point.prototype.render = function (ct) {
-
-        ct.beginPath();
-        ct.arc(this.x, this.y, POINT_RADIUS, 0, 2 * Math.PI);
-
-        if (this.pressed) {
-            ct.fill();
-        } else {
-            ct.stroke();
-        }
-    };
-    
-    // Macros
-    var POINT_RADIUS = Math.min(screenWidth, screenHeight) * 0.1,
-        MIN_DISTANCE = POINT_RADIUS * 6,
-        HALO_SPEED = 0.2;
-    
     // Check if finger touches given point
     function fingerInPoint (point) {
-        if (finger.x > (point.x - POINT_RADIUS) && finger.x < (point.x + POINT_RADIUS) &&
-            finger.y > (point.y - POINT_RADIUS) && finger.y < (point.y + POINT_RADIUS))  {
+        if (finger.x > (point.x - point.radius) && finger.x < (point.x + point.radius) &&
+            finger.y > (point.y - point.radius) && finger.y < (point.y + point.radius))  {
             return true;
         } 
         return false;
@@ -200,13 +180,10 @@ define(['audio'], function (audio) {
     }
     
     function start () {
-        
         // Bind events
         bindEvents();
-        
         // Start running game clock 
         clock();
-        
     }
     
     function clock () {
@@ -223,10 +200,10 @@ define(['audio'], function (audio) {
     }
     
     function getRandomPoint (maxWidth, maxHeight) {
-        var p = new Point();
+        var p = new Point(POINT_RADIUS);
         
-        p.x = Math.floor(POINT_RADIUS  + Math.random() * (maxWidth - 2 * POINT_RADIUS));
-        p.y = Math.floor(POINT_RADIUS  + Math.random() * (maxHeight - 2 * POINT_RADIUS));
+        p.x = Math.floor(POINT_RADIUS + Math.random() * (maxWidth - 2 * POINT_RADIUS));
+        p.y = Math.floor(POINT_RADIUS + Math.random() * (maxHeight - 2 * POINT_RADIUS));
         
         return p;
     }
@@ -314,13 +291,8 @@ define(['audio'], function (audio) {
             c.lineTo(finger.x, finger.y);
             c.stroke(); 
             
-      
-        } else if (pointC.pressed) {
-    
         }
         
-        
-       
     }
     
     function renderHalo (c) {
@@ -364,7 +336,6 @@ define(['audio'], function (audio) {
         var digits = score.toString().length;
         
         c.font = (Math.min(screenHeight, screenWidth) * 0.05) / digits +  'px Arial';
-        
         
         if (score > 0 && activeHalo) {
             var oldStyle = c.fillStyle;
