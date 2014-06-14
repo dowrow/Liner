@@ -1,21 +1,29 @@
-var Liner = Liner || {};
+// Liner
+// Simple yet addictive geometric game
+// Diego Castaño (Dowrow) 06-2014
 
-// Requires howler.js
-Liner.audio = (function (Howler) {
-    var click = new Howl({urls: ['samples/beep1.wav']}),
-        clack = new Howl({urls: ['samples/beep2.wav']}),
-        fail = new Howl({urls: ['samples/lasergun1.wav']});
+// Requires audio module
+define(['audio'], function (audio) {
     
-    return {
-        playClick: function () { click.play(); },
-        playClack: function () { clack.play(); },
-        playFail: function () { fail.play(); }
-    };
-    
-} (Howler));
-
-Liner.engine = (function () {
-    
+    var canvas = {}, ctx = {},
+        vCanvas = {}, vCtx = {},
+        screenWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0),
+        screenHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0),
+        pointA = new Point(),
+        pointB = new Point(),
+        pointC = new Point(),
+        fingerDown = false,
+        finger = new Point(),
+        halo = [new Point(), new Point()],
+        haloStep = 0,
+        activeHalo = false,
+        score = 0,
+        last = 0,
+        now = 0,
+        delta = 1,
+        failed = false,
+        failStep = 0,
+        collision = new Point();
     
     // Point object
     function Point () {
@@ -39,31 +47,9 @@ Liner.engine = (function () {
             ct.stroke();
         }
     };
-
-    var canvas = {}, ctx = {},
-        vCanvas = {}, vCtx = {},
-        screenWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0),
-        screenHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0),
-        pointA = new Point(),
-        pointB = new Point(),
-        pointC = new Point(),
-        fingerDown = false,
-        finger = new Point(),
-        halo = [new Point(), new Point()],
-        haloStep = 0,
-        activeHalo = false,
-        score = 0,
-        last = 0,
-        now = 0,
-        delta = 1,
-        failed = false,
-        failStep = 0,
-        collision = new Point();
-        
-        
+    
     // Macros
-    var RENDER_TIMEOUT = 0,
-        POINT_RADIUS = Math.min(screenWidth, screenHeight) * 0.1,
+    var POINT_RADIUS = Math.min(screenWidth, screenHeight) * 0.1,
         MIN_DISTANCE = POINT_RADIUS * 6,
         HALO_SPEED = 0.2;
     
@@ -124,13 +110,13 @@ Liner.engine = (function () {
         if (fingerDown) {
             if (fingerInPoint(pointA) && !pointA.pressed) {
                 pointA.pressed = true;
-                Liner.audio.playClick();
+                audio.playClick();
             } else if (fingerInPoint(pointB) && pointA.pressed && !pointB.pressed) {
                 pointB.pressed = true;
-                Liner.audio.playClack();
+                audio.playClack();
             } else if (fingerInPoint(pointC) && pointB.pressed && !pointC.pressed) {
                 pointC.pressed = true;
-                Liner.audio.playClack();
+                audio.playClack();
                 score++; // WIN A POINT
             }
             
@@ -157,7 +143,7 @@ Liner.engine = (function () {
     }
     
     function onCollision () {
-        Liner.audio.playFail();
+        audio.playFail();
                 
         // Stop rendering halo
         activeHalo = false;
@@ -217,8 +203,6 @@ Liner.engine = (function () {
         
         // Bind events
         bindEvents();
-        
-        
         
         // Start running game clock 
         clock();
@@ -410,5 +394,5 @@ Liner.engine = (function () {
         bindCanvas: bindCanvas,
         start: start
     };
-    
-} ());
+});
+
