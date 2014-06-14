@@ -14,7 +14,7 @@ define(['audio', 'point'], function (audio) {
     // Macros
         POINT_RADIUS = Math.min(screenWidth, screenHeight) * 0.1,
         MIN_DISTANCE = POINT_RADIUS * 6,
-        HALO_SPEED = 0.2;
+        HALO_SPEED = 0.2,
     
     // Private variables
         pointA = new Point(POINT_RADIUS),
