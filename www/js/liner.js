@@ -15,6 +15,7 @@ define(['audio', 'point'], function (audio) {
         POINT_RADIUS = Math.min(screenWidth, screenHeight) * 0.1,
         MIN_DISTANCE = POINT_RADIUS * 6,
         HALO_SPEED = 0.2,
+        INITIAL_TIME = 30000, // In milliseconds
     
     // Private variables
         pointA = new Point(POINT_RADIUS),
@@ -31,7 +32,9 @@ define(['audio', 'point'], function (audio) {
         delta = 1,
         failed = false,
         failStep = 0,
-        collision = new Point();
+        collision = new Point(),
+        time = 0,
+        timerInterval = -1;
     
     // Check if finger touches given point
     function fingerInPoint (point) {
@@ -91,6 +94,8 @@ define(['audio', 'point'], function (audio) {
             if (fingerInPoint(pointA) && !pointA.pressed) {
                 pointA.pressed = true;
                 audio.playClick();
+                // Start counting!!
+                timerInterval = setInterval(timer, 10);
             } else if (fingerInPoint(pointB) && pointA.pressed && !pointB.pressed) {
                 pointB.pressed = true;
                 audio.playClack();
@@ -184,6 +189,18 @@ define(['audio', 'point'], function (audio) {
         bindEvents();
         // Start running game clock 
         clock();
+        // Reset timer
+        time = INITIAL_TIME;
+
+    }
+    
+    function timer () {
+        if (time > 0) {
+            time -= 10;
+        } else {
+            alert('YOU SCORED ' + score + ' POINTS');
+            clearInterval(timerInterval);
+        }
     }
     
     function clock () {
@@ -327,7 +344,6 @@ define(['audio', 'point'], function (audio) {
             c.lineTo(halo[1].x, halo[1].y);
             c.stroke(); 
             c.strokeStyle = oldStyle;
-            
             c.fillStyle = oldF;
         }
     }
@@ -339,9 +355,17 @@ define(['audio', 'point'], function (audio) {
         c.fillText('Score: ' + score, fontSize * 0.5, fontSize);
     }
     
+    // Draw remaining seconds in top right corner (10%top)
+    function renderTime (c) {
+        var fontSize = Math.min(screenHeight, screenWidth) * 0.05;
+        c.font = fontSize +  'px Helvetica, Arial, sans-serif';
+        c.fillText('Time: ' + Math.floor(time/1000) + ':' + (time % 1000), screenWidth - fontSize * 6, fontSize);
+    } 
+    
     function render () {
         // Draw every object in virtual canvas
         vCtx.clearRect(0, 0, screenWidth, screenHeight);
+        renderTime(vCtx);
         renderHalo(vCtx);
         renderPoints(vCtx);
         renderRays(vCtx);
